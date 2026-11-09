@@ -1,0 +1,63 @@
+<%- include('../partials/app-start', { title }) %>
+<div class="topbar">
+  <span class="date"><%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh', weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' }).format(new Date()) %></span>
+  <div class="actions"><span class="notification-wrap"><button class="icon-btn" id="notificationBtn" type="button" aria-label="Thông báo" aria-controls="notificationPanel" aria-expanded="false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><% if(notifications.length){ %><span class="notification-count"><%= notifications.length %></span><% } %></button><div class="notification-panel" id="notificationPanel"><h3>Thông báo</h3><% if(!notifications.length){ %><div class="empty-state compact">Chưa có thông báo mới.</div><% } %><% notifications.forEach(n=>{ %><a class="notification-item" href="<%= n.href %>"><span class="pill <%= n.type==='metric'?'tone-red':n.type==='appointment'?'tone-blue':'tone-mint' %>"><%= n.type==='metric'?'Chỉ số':n.type==='appointment'?'Lịch':'Nhắc' %></span><p><%= n.title %><br><small><%= n.detail %> · <%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(n.at)) %></small></p></a><% }) %></div></span><a class="btn btn-primary" href="/care">＋ Thêm nhắc nhở</a></div>
+</div>
+<div class="page-head">
+  <div><p class="eyebrow">Chào bạn, <%= currentUser.display_name %></p><h1>Sức khỏe cả nhà, gói gọn trong một nơi.</h1><p class="sub">Theo dõi lịch chăm sóc, hồ sơ và tình trạng sức khỏe của những người bạn được phép xem.</p><span class="scope-note">🔒 Dashboard tuân theo quyền truy cập hồ sơ — Chủ nhà không mặc nhiên xem được tất cả</span></div>
+  <div class="avatar-stack"><% profiles.slice(0,4).forEach((x,i) => { %><span class="avatar sz-md" style="background:<%= ['#dff1eb','#f6dfd3','#e8e0f4','#f5e9be'][i%4] %>"><%= x.person.full_name.slice(0,1).toUpperCase() %></span><% }) %></div>
+</div>
+
+<% if (!hasHealthConsent) { %>
+<section class="card card-pad" style="margin-bottom:20px;border-color:#bddfd2">
+  <div class="card-head" style="padding:0 0 14px;border:none"><div><h2>Kích hoạt hồ sơ sức khỏe cá nhân</h2><p>Dữ liệu sức khỏe cần sự đồng ý riêng của bạn.</p></div><span class="pill tone-mint">Bước bảo mật</span></div>
+  <p style="font-size:13px;color:var(--muted);line-height:1.7">Carely cần xử lý dữ liệu sức khỏe để quản lý hồ sơ, thuốc, lịch chăm sóc, chỉ số, cảnh báo theo ngưỡng và hỗ trợ kết nối cơ sở y tế. Bạn có thể xem lại hoặc thay đổi lựa chọn này trong phần Quyền riêng tư & dữ liệu.</p>
+  <form method="post" action="/app/health-consent" class="form-stack" style="max-width:760px">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="check-row"><input type="checkbox" name="acceptHealth" required><span>Tôi đồng ý để Carely xử lý dữ liệu sức khỏe của tôi cho các chức năng nêu trên.</span></label>
+    <button class="btn btn-primary" type="submit" style="width:max-content">Kích hoạt hồ sơ sức khỏe</button>
+  </form>
+</section>
+<% } %>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><div><h2>Lịch chăm sóc</h2><p><%= taskGroups.length %> nhóm việc cần chú ý</p></div><a class="btn btn-ghost" href="/care">Xem lịch →</a></div>
+    <div class="sched-list">
+      <% if (!tasks.length) { %><div class="empty-state" style="margin:18px 0">Chưa có việc chăm sóc sắp tới.</div><% } %>
+      <% taskGroups.forEach(({task,count,personName}) => { %>
+      <div class="sched-item"><span class="ui-showcase-preview-icon" aria-hidden="true">↗</span><span class="sched-icon <%= task.task_type === 'medication' ? 'tone-mint' : task.task_type === 'appointment' ? 'tone-peach' : 'tone-blue' %>">●</span><div class="sched-body"><p class="sched-title"><%= task.title %> <%= count>1?'· '+count+' lần':'' %></p><p class="sched-meta"><%= personName %> · <%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(task.due_at)) %></p></div><span class="pill tone-mint"><%= task.task_type === 'medication' ? 'Thuốc' : task.task_type === 'appointment' ? 'Lịch khám' : 'Chăm sóc' %></span></div>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="score-card ui-care-score-card">
+    <div class="score-top"><span class="score-icon">✓</span><span class="score-flag">THEO DÕI TUÂN THỦ</span></div>
+    <p class="score-label">Tỷ lệ tuân thủ chăm sóc 30 ngày gần nhất</p>
+    <div class="score-value"><span class="num <%= compliance.percentage!==null && compliance.percentage<50?'ui-care-score-low':compliance.percentage!==null && compliance.percentage<80?'ui-care-score-medium':'' %>"><%= compliance.percentage === null ? '—' : compliance.percentage + '%' %></span><span class="denom"><%= compliance.completed %>/<%= compliance.total %> việc</span></div>
+    <div class="score-bar"><span style="width:<%= compliance.percentage || 0 %>%"></span></div>
+    <p class="score-note"><%= compliance.total ? 'Tỷ lệ được tính trên các việc đã đến hạn trong kỳ.' : 'Chưa có việc đến hạn trong kỳ nên Carely không tính tỷ lệ.' %></p>
+  </section>
+</div>
+
+<div class="grid-2b">
+  <section class="card card-pad">
+    <div class="card-head" style="padding:0 0 18px;border:none"><div><h2>Tổng quan gia đình</h2><p>Những hồ sơ bạn được phép xem</p></div><a class="btn btn-ghost" href="/family">Quản lý</a></div>
+    <% if (!profiles.length) { %><div class="empty-state">Chưa có hồ sơ sức khỏe đang hoạt động.</div><% } %>
+    <div class="member-grid"><% profiles.slice(0,6).forEach((x,i) => { %><a class="member-row" href="/profiles/<%= x.profile.id %>"><span class="avatar sz-lg" style="background:<%= ['#dff1eb','#f6dfd3','#e8e0f4','#f5e9be'][i%4] %>"><%= x.person.full_name.slice(0,1).toUpperCase() %></span><span style="flex:1"><span class="m-name"><%= x.person.full_name %></span><span class="m-meta"><%= x.isOwner ? 'Hồ sơ của bạn' : x.isManager ? 'Bạn là người quản lý hồ sơ' : x.accessLevel === 'full' ? 'Toàn quyền' : 'Chỉ xem' %></span></span><span class="status-dot ok"></span></a><% }) %></div>
+  </section>
+
+  <section class="card card-pad">
+    <div class="card-head" style="padding:0 0 18px;border:none"><div><h2>Sắp tới</h2><p>Lịch hẹn cơ sở y tế</p></div><a class="btn btn-ghost" href="/appointments">Tất cả</a></div>
+    <% if (!appointments.length) { %><div class="empty-state">Chưa có lịch hẹn sắp tới đã xác nhận.</div><% } %>
+    <% appointments.slice(0,3).forEach((a) => { %><div class="upcoming-item"><div class="date-chip"><span class="dow"><%= ui.appointmentStatus(a.status) %></span><span class="dom"><%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit'}).format(new Date(a.confirmed_for || a.proposed_for || a.requested_for)) %></span></div><div><p class="t"><%= a.facility?.facility_name || 'Cơ sở y tế' %></p><p class="d"><%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(a.confirmed_for || a.proposed_for || a.requested_for)) %></p></div></div><div class="divider"></div><% }) %>
+    <% if(awaitingAppointments.length){ %>
+    <div class="ui-core-awaiting"><h3>Cần theo dõi <span class="pill tone-peach"><%= awaitingAppointments.length %></span></h3>
+      <% awaitingAppointments.slice(0,3).forEach(a => { %>
+        <div class="ui-core-await-row"><span class="ui-core-await-dot"></span><div><b><%= a.facility?.facility_name || 'Cơ sở y tế' %></b><small><%= a.status==='proposed_time' ? 'Cần phản hồi thời gian đề xuất' : 'Đang chờ cơ sở xác nhận' %></small></div><a href="/appointments">Xem →</a></div>
+      <% }) %>
+    </div>
+    <% } %>
+  </section>
+</div>
+<%- include('../partials/app-end') %>

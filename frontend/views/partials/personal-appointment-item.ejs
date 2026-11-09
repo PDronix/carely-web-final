@@ -1,0 +1,30 @@
+<article class="care-appointment-item ui-forms-appointment-item">
+  <div class="care-appointment-info">
+    <strong><%= a.title %></strong>
+    <span><%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'medium',timeStyle:'short'}).format(new Date(a.scheduled_at)) %></span>
+    <span><%= a.facility_name || 'Chưa ghi cơ sở y tế' %><%= a.doctor_name ? ' · BS: ' + a.doctor_name : '' %></span>
+    <% if(a.note){ %><span><%= a.note %></span><% } %>
+  </div>
+  <div class="care-appointment-side">
+    <span class="pill <%= a.status==='completed'?'tone-mint':a.status==='cancelled'?'tone-neutral':'tone-blue' %>"><%= ui.status(a.status) %></span>
+    <% if(a.status==='scheduled' && selected?.capabilities.canManagePersonalAppointment){ %>
+      <div class="care-appointment-actions">
+        <% if(new Date(a.scheduled_at)>new Date()){ %><button type="button" class="btn btn-secondary btn-sm" data-toggle-target="appointment-edit-<%= a.id %>">Sửa</button><% } %>
+        <% if(new Date(a.scheduled_at)<=new Date()){ %><form method="post" action="/care/personal-appointments/<%= a.id %>/complete"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-secondary btn-sm">Đã khám</button></form><% } %>
+        <form method="post" action="/care/personal-appointments/<%= a.id %>/cancel" data-confirm="Hủy lịch khám cá nhân này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-ghost btn-sm">Hủy lịch</button></form>
+      </div>
+    <% } %>
+  </div>
+  <% if(a.status==='scheduled' && new Date(a.scheduled_at)>new Date() && selected?.capabilities.canManagePersonalAppointment){ %>
+    <form id="appointment-edit-<%= a.id %>" class="ui-forms-appointment-edit" hidden method="post" action="/care/personal-appointments/<%= a.id %>/update">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="field"><span>Tiêu đề</span><input name="title" required maxlength="180" value="<%= a.title %>"></label>
+      <div class="care-form-row"><label class="field"><span>Ngày giờ khám</span><input type="datetime-local" required name="scheduledAt" value="<%= new Date(a.scheduled_at).toLocaleString('sv-SE',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}).slice(0,16).replace(' ','T') %>"></label>
+        <label class="field"><span>Nhắc trước</span><input type="datetime-local" name="reminderAt" value="<%= a.reminder_at ? new Date(a.reminder_at).toLocaleString('sv-SE',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}).slice(0,16).replace(' ','T') : '' %>"></label></div>
+      <label class="field"><span>Cơ sở y tế</span><input name="facilityName" maxlength="180" value="<%= a.facility_name || '' %>"></label>
+      <label class="field"><span>Bác sĩ</span><input name="doctorName" maxlength="120" value="<%= a.doctor_name || '' %>"></label>
+      <label class="field"><span>Ghi chú</span><textarea name="note" maxlength="1200" rows="2"><%= a.note || '' %></textarea></label>
+      <button type="submit" class="btn btn-primary btn-sm">Lưu lịch khám</button>
+    </form>
+  <% } %>
+</article>

@@ -1,0 +1,5 @@
+<%- include('../partials/app-start', { title }) %>
+<div class="page-head"><div><h1>Hồ sơ sức khỏe</h1><p class="sub">Bệnh án, thuốc, dị ứng/kiêng khem và quyền truy cập cho từng hồ sơ.</p></div></div>
+<% if (!profiles.length) { %><div class="empty-state">Chưa có hồ sơ nào bạn được phép truy cập. Nếu bạn vừa đăng ký, hãy xác nhận việc xử lý dữ liệu sức khỏe ở trang Tổng quan.</div><% } %>
+<div class="member-grid"><% profiles.forEach((x,i) => { %><a class="member-row" href="/profiles/<%= x.profile.id %>"><span class="avatar sz-lg" style="background:<%= ['#dff1eb','#f6dfd3','#e8e0f4','#f5e9be'][i%4] %>"><%= x.person.full_name.slice(0,1).toUpperCase() %></span><span style="flex:1"><span class="m-name"><%= x.person.full_name %> <% if (x.person.person_type === 'dependent') { %><span class="mini-badge dependent">Người phụ thuộc</span><% } %></span><span class="m-meta"><%= x.isOwner ? 'Chủ hồ sơ' : x.isManager ? 'Người quản lý hồ sơ' : x.accessLevel === 'full' ? 'Toàn quyền' : 'Chỉ xem' %></span></span><span class="mini-badge access"><%= ui.access(x.accessLevel) %></span></a><% }) %></div>
+<%- include('../partials/app-end') %>

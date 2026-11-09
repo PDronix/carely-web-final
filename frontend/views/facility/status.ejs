@@ -1,0 +1,13 @@
+<%- include('../partials/head', { title }) %><body class="public-body"><%- include('../partials/public-header') %>
+<main class="public-section-v2" style="padding-top:150px;max-width:980px"><section class="card card-pad" data-reveal><div class="page-head"><div><p class="eyebrow">CỔNG CƠ SỞ Y TẾ</p><h1><%= facility.facility_name %></h1><p class="sub">Hồ sơ đăng ký cơ sở hiện đang ở trạng thái <b><%= ui.status(facility.verification_status) %></b>.</p></div><span class="pill <%= facility.verification_status==='pending'?'tone-peach':'tone-red' %>"><%= ui.status(facility.verification_status) %></span></div><div class="muted-box"><b>Mã giấy phép:</b> <%= facility.license_number %><br><b>Tài liệu đã gửi:</b> <%= documents.length %> file<br><% if(facility.rejection_reason){ %><b>Lý do từ chối:</b> <%= facility.rejection_reason %><% } %></div><p style="color:var(--muted);font-size:13px;line-height:1.7;margin-top:18px">Trong thời gian chờ duyệt, tài khoản chỉ được xem trạng thái và cập nhật thông tin tài khoản. Các chức năng tiếp nhận lịch hẹn và nhập kết quả khám sẽ được mở sau khi hồ sơ được duyệt.</p>
+<% if (facility.verification_status === 'rejected') { %>
+<div class="divider"></div><div class="section-title"><div><h2>Gửi lại hồ sơ xác minh</h2><p>Cập nhật giấy phép sau khi đã xử lý lý do từ chối.</p></div></div>
+<form class="form-stack" method="post" enctype="multipart/form-data" action="/facility/status/resubmit">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label class="field"><span>Mã giấy phép / mã cơ sở</span><input name="licenseNumber" value="<%= facility.license_number %>" required></label>
+  <label class="field"><span>Giấy phép mới (PDF/JPG/PNG, tối đa 10 MB)</span><input type="file" name="licenseFile" accept="application/pdf,image/jpeg,image/png" required></label>
+  <button class="btn btn-primary" type="submit">Gửi lại để xét duyệt</button>
+</form>
+<% } %>
+<div class="inline-actions" style="margin-top:18px"><a class="btn btn-secondary" href="/account">Thông tin tài khoản</a><form method="post" action="/auth/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost">Đăng xuất</button></form></div></section></main>
+<%- include('../partials/public-footer') %>

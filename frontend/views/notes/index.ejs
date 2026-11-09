@@ -1,0 +1,56 @@
+<%- include('../partials/app-start', { title }) %>
+<div class="page-head">
+  <div>
+    <h1>Nhật ký chăm sóc</h1>
+    <p class="sub">Lưu lại diễn biến chăm sóc theo từng hồ sơ. Đây là nhật ký theo dõi, không phải cuộc trò chuyện chung của gia đình.</p>
+  </div>
+  <% if(writable){ %><button type="button" class="btn btn-primary" data-toggle-target="note-create">+ Thêm ghi chú</button><% } %>
+</div>
+<% if(!profiles.length){ %>
+  <div class="empty-state">Chưa có hồ sơ sức khỏe bạn có thể truy cập.</div>
+<% } else { %>
+  <div class="tabstrip">
+    <% profiles.forEach(x=>{ %>
+      <a class="tabchip <%= Number(profileId)===Number(x.profile.id)?'is-active':'' %>" href="/notes?profileId=<%= x.profile.id %>"><%= x.person.full_name %><span class="mini-badge"><%= ui.access(x.accessLevel) %></span></a>
+    <% }) %>
+  </div>
+  <% if(selected && !writable){ %>
+    <div class="role-banner">👁️ <div><b>Hồ sơ này đang ở chế độ chỉ xem.</b><br>Bạn có thể đọc nhật ký nhưng không thể tạo, sửa hoặc xóa ghi chú.</div></div>
+  <% } %>
+  <% if(writable){ %>
+    <section id="note-create" class="card card-pad note-create-panel" hidden>
+      <div class="card-head" style="padding:0 0 16px;border:none"><div><h2>Thêm ghi chú mới</h2><p>Ghi lại thông tin có ích cho quá trình chăm sóc <%= selected?.person?.full_name || '' %>.</p></div></div>
+      <form class="form-stack" method="post" action="/notes">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="profileId" value="<%= profileId %>">
+        <label class="field"><span>Nội dung ghi chú</span><textarea name="content" required maxlength="1200" placeholder="VD: Buổi sáng hơi ho nhẹ, nhiệt độ ổn định, ăn uống bình thường..."></textarea></label>
+        <div class="form-actions"><button class="btn btn-primary">Lưu vào nhật ký</button><button type="button" class="btn btn-ghost" data-toggle-target="note-create">Đóng</button></div>
+      </form>
+    </section>
+  <% } %>
+  <section class="card card-pad care-journal">
+    <div class="card-head journal-head" style="padding:0 0 18px;border:none">
+      <div><span class="journal-eyebrow">THEO DÕI CHĂM SÓC</span><h2>Nhật ký của <%= selected?.person?.full_name || 'hồ sơ' %></h2><p>Các ghi chú được sắp xếp từ mới đến cũ.</p></div>
+      <span class="journal-count"><%= notes.length %> ghi chú gần nhất</span>
+    </div>
+    <% if(!notes.length){ %><div class="empty-state">Chưa có ghi chú nào trong nhật ký này.</div><% } %>
+    <div class="journal-timeline">
+      <% let lastDate=''; notes.forEach(x=>{ const created=new Date(x.note.created_at); const dateLabel=new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'long'}).format(created); if(dateLabel!==lastDate){ lastDate=dateLabel; %>
+        <div class="journal-date"><%= dateLabel %></div>
+      <% } %>
+      <article class="journal-entry">
+        <div class="journal-time"><%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit'}).format(created) %></div>
+        <span class="avatar sz-md" aria-hidden="true"><%= (x.author?.display_name || 'C').slice(0,1).toUpperCase() %></span>
+        <div class="journal-content"><div class="journal-author"><%= x.author?.display_name || 'Thành viên' %></div><p><%= x.note.content %></p>
+          <% if(writable && String(x.note.author_user_id)===String(currentUser?.id)){ %>
+          <div class="ui-forms-note-actions"><button type="button" class="btn btn-secondary btn-sm" data-toggle-target="note-edit-<%= x.note.id %>">Sửa</button>
+            <form method="post" action="/notes/<%= x.note.id %>/delete" data-confirm="Xóa ghi chú này? Hành động không thể hoàn tác."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-ghost btn-sm" type="submit">Xóa</button></form></div>
+          <form hidden id="note-edit-<%= x.note.id %>" class="ui-forms-note-edit" method="post" action="/notes/<%= x.note.id %>/update"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="field"><span>Sửa nội dung ghi chú</span><textarea name="content" required maxlength="1200" rows="3"><%= x.note.content %></textarea></label><button class="btn btn-primary btn-sm" type="submit">Lưu ghi chú</button></form>
+          <% } %>
+        </div>
+      </article>
+      <% }) %>
+    </div>
+  </section>
+<% } %>
+<%- include('../partials/app-end') %>

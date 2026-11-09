@@ -1,0 +1,76 @@
+<%- include('../partials/app-start', { title }) %>
+<div class="page-head"><div><h1>Lịch chăm sóc và tuân thủ</h1><p class="sub">Theo dõi việc đến hạn, nhắc chăm sóc và lịch khám cá nhân theo từng hồ sơ.</p></div><a class="btn btn-secondary" href="/medications<%= profileId ? '?profileId='+profileId : '' %>">Thuốc & lịch dùng</a></div>
+<% if(!profiles.length){ %><div class="empty-state">Chưa có hồ sơ sức khỏe đang hoạt động.</div><% } else { %>
+<div class="tabstrip"><% profiles.forEach(x=>{ %><a class="tabchip <%= Number(profileId)===Number(x.profile.id)?'is-active':'' %>" href="/care?profileId=<%= x.profile.id %>"><%= x.person.full_name %><span class="mini-badge"><%= ui.access(x.accessLevel) %></span></a><% }) %></div>
+<% if(selected && !selected.capabilities.canCompleteCareTask){ %><div class="role-banner">👁️ <div><b>Hồ sơ này đang ở chế độ chỉ xem.</b><br>Bạn có thể theo dõi lịch và mức tuân thủ nhưng không thể tạo hoặc hoàn thành việc chăm sóc.</div></div><% } %>
+<nav class="ui-care-care-filters" aria-label="Lọc công việc chăm sóc"><% [['upcoming','Sắp tới & hôm nay'],['missed','Đã bỏ lỡ'],['completed','Đã hoàn thành'],['all','Tất cả']].forEach(([key,label])=>{ %><a class="ui-care-filter <%= view===key?'is-active':'' %>" href="/care?profileId=<%= profileId %>&view=<%= key %>"><%= label %></a><% }) %></nav>
+<div class="grid-2"><section class="card"><div class="card-head"><div><h2><%= view==='upcoming'?'Việc cần thực hiện':view==='missed'?'Việc đã bỏ lỡ':view==='completed'?'Việc đã hoàn thành':'Tất cả việc chăm sóc' %></h2><p><%= view==='upcoming'?'Hiển thị trong 7 ngày tới, gồm cả việc đến hạn hôm nay':'Lịch sử và trạng thái công việc' %> · <%= taskTotal %> việc · Trang <%= page %>/<%= totalPages %></p></div><span class="pill tone-mint"><%= compliance.percentage===null?'—':compliance.percentage+'%' %></span></div><div class="sched-list"><% if(!tasks.length){ %><div class="empty-state" style="margin:18px 0">Chưa có việc chăm sóc.</div><% } %><% tasks.forEach((t,index)=>{ const scheduledFuture=t.status==='pending' && new Date(t.due_at).getTime()>Date.now(); const tone=t.status==='completed'?'tone-mint':t.status==='missed'?'tone-red':t.status==='cancelled'?'tone-neutral':'tone-blue'; %><div class="sched-item <%= t.status==='completed'?'is-done':'' %> <%= index>=6?'ui-care-care-extra':'' %>" <%= index>=6?'hidden':'' %> data-care-task="<%= t.id %>"><% if(t.status==='pending' && (ui.canManagePendingTask(t) || ui.canCompleteTask(t)) && selected?.capabilities.canCompleteCareTask){ %><form method="post" action="/care/tasks/<%= t.id %>/complete" class="js-complete-task" data-care-due="<%= new Date(t.due_at).getTime() %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="check-btn <%= scheduledFuture?'care-waiting':'' %>" type="submit" <%= scheduledFuture?'disabled':'' %> title="<%= scheduledFuture?'Chưa đến thời gian thực hiện':'Xác nhận đã thực hiện việc chăm sóc' %>" aria-label="<%= scheduledFuture?'Chưa đến thời gian thực hiện':'Xác nhận đã thực hiện việc chăm sóc' %>"><%= scheduledFuture?'◷':'✓' %></button></form><% } else { %><span class="check-btn <%= t.status==='completed'?'checked':'' %>"><%= t.status==='completed'?'✓':'–' %></span><% } %><span class="sched-icon <%= t.task_type==='medication'?'tone-mint':t.task_type==='appointment'?'tone-peach':'tone-blue' %>">●</span><div class="sched-body"><p class="sched-title"><%= t.title %></p><p class="sched-meta"><%= new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(t.due_at)) %> · <%= ui.taskType(t.task_type) %><% if(scheduledFuture){ %> · Chưa đến giờ xác nhận<% } %></p><% if(t.status === 'completed' && t.completion_note){ %><p class="ui-forms-completion-saved">Ghi chú hoàn thành: <%= t.completion_note %></p><% } %></div><span class="pill <%= tone %>" data-task-status><%= scheduledFuture?'Sắp tới':ui.taskStatus(t.status) %></span>
+<% if(t.task_type==='general' && t.status==='pending' && ui.canManagePendingTask(t) && selected?.capabilities.canCompleteCareTask){ %><div class="ui-core-task-actions"><button class="btn btn-secondary btn-sm" type="button" data-toggle-target="task-edit-<%= t.id %>">Sửa</button><form method="post" action="/care/tasks/<%= t.id %>/cancel" data-confirm="Hủy nhắc chăm sóc này?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-ghost btn-sm">Hủy</button></form></div><form class="ui-core-task-edit" hidden id="task-edit-<%= t.id %>" method="post" action="/care/tasks/<%= t.id %>/update"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="field"><span>Tên việc</span><input name="title" maxlength="180" required value="<%= t.title %>"></label><label class="field"><span>Thời gian nhắc mới</span><input type="datetime-local" name="dueAt" required value="<%= new Date(t.due_at).toLocaleString('sv-SE',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}).slice(0,16).replace(' ','T') %>"></label><label class="field"><span>Ghi chú</span><input name="description" maxlength="500" value="<%= t.description || '' %>"></label><button class="btn btn-primary btn-sm">Lưu thay đổi</button></form><% } %></div><% }) %></div><% if(tasks.length>6){ %><div class="ui-care-more-wrap"><button type="button" class="btn btn-secondary" data-care-load-more aria-expanded="false">Xem thêm <%= tasks.length-6 %> việc trong trang</button></div><% } %>
+<% if(totalPages>1){ %><nav class="ui-showcase-pagination" aria-label="Phân trang việc chăm sóc">
+  <% if(page>1){ %><a class="btn btn-secondary btn-sm" href="/care?profileId=<%= profileId %>&view=<%= view %>&page=<%= page-1 %>">← Trang trước</a><% } %>
+  <span>Trang <%= page %>/<%= totalPages %></span>
+  <% if(page<totalPages){ %><a class="btn btn-secondary btn-sm" href="/care?profileId=<%= profileId %>&view=<%= view %>&page=<%= page+1 %>">Trang sau →</a><% } %>
+</nav><% } %></section><section class="score-card ui-care-score-card"><div class="score-top"><span class="score-icon">✓</span><span class="score-flag">THEO DÕI TUÂN THỦ</span></div><p class="score-label">Tỷ lệ hoàn thành trong 30 ngày gần nhất</p><div class="score-value"><span class="num <%= compliance.percentage!==null && compliance.percentage<50?'ui-care-score-low':compliance.percentage!==null && compliance.percentage<80?'ui-care-score-medium':'' %>"><%= compliance.percentage===null?'—':compliance.percentage+'%' %></span><span class="denom"><%= compliance.completed %>/<%= compliance.total %> việc</span></div><div class="score-bar"><span style="width:<%= compliance.percentage || 0 %>%"></span></div><p class="score-note">Đã bỏ lỡ thì không được xác nhận hoàn thành lại. Việc đã hủy không tính vào tỷ lệ tuân thủ.</p></section></div>
+<section class="care-planner" aria-labelledby="care-planner-title">
+  <div class="care-planner-heading">
+    <div><span class="care-planner-eyebrow">KẾ HOẠCH CÁ NHÂN</span><h2 id="care-planner-title">Lên lịch và nhắc chăm sóc</h2><p>Quản lý lịch khám tự ghi nhận và các việc chăm sóc định kỳ tại một nơi.</p></div>
+  </div>
+  <div class="care-planner-grid">
+    <section class="card care-plan-card" aria-labelledby="personal-appointments-title">
+      <header class="care-plan-header">
+        <span class="care-plan-icon" aria-hidden="true"><svg class="nav-icon"><use href="/icons.svg#calendar"></use></svg></span>
+        <div class="care-plan-heading"><h3 id="personal-appointments-title">Lịch khám cá nhân</h3><p>Lịch gia đình chủ động ghi nhận, không gửi tới cơ sở y tế.</p></div>
+        <span class="care-plan-count"><%= personalAppointments.length %></span>
+      </header>
+      <div class="care-appointment-list">
+        <% if (!personalAppointments.length) { %>
+          <div class="care-plan-empty"><span aria-hidden="true">▦</span><strong>Chưa có lịch khám nào</strong><p>Tạo một lịch khám để không bỏ sót các mốc thăm khám.</p></div>
+        <% } %>
+        <% personalAppointments.slice(0,3).forEach(a => { %>
+          <%- include('../partials/personal-appointment-item', { a }) %>
+        <% }) %>
+        <% if(personalAppointments.length>3){ %><details class="care-extra-appointments"><summary>Xem thêm <%= personalAppointments.length-3 %> lịch khám</summary>
+          <% personalAppointments.slice(3).forEach(a=>{ %>
+            <%- include('../partials/personal-appointment-item', { a }) %>
+          <% }) %>
+        </details><% } %>
+      </div>
+      <% if(selected?.capabilities.canManagePersonalAppointment){ %>
+        <details class="care-create-panel" id="care-create-appointment">
+          <summary class="care-create-trigger"><span aria-hidden="true">＋</span> Thêm lịch khám cá nhân <span class="care-create-arrow" aria-hidden="true">⌄</span></summary>
+          <form class="care-create-form" method="post" action="/care/personal-appointments">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="profileId" value="<%= profileId %>">
+            <label class="field"><span>Tiêu đề <span class="required-mark">*</span></span><input name="title" required maxlength="180" placeholder="VD: Tái khám mắt"></label>
+            <div class="care-form-row"><label class="field"><span>Ngày/giờ khám <span class="required-mark">*</span></span><input type="datetime-local" name="scheduledAt" required></label><label class="field"><span>Nhắc trước lúc khám</span><input type="datetime-local" name="reminderAt"></label></div>
+            <label class="field"><span>Cơ sở y tế</span><input name="facilityName" maxlength="180" placeholder="Tên bệnh viện, phòng khám (không bắt buộc)"></label>
+            <label class="field"><span>Bác sĩ dự kiến</span><input name="doctorName" maxlength="120" placeholder="Tên bác sĩ (tùy chọn)"></label>
+            <label class="field"><span>Ghi chú</span><textarea name="note" maxlength="1200" rows="2" placeholder="Nội dung cần nhớ"></textarea></label>
+            <button class="btn btn-primary care-submit" type="submit">Lưu lịch khám</button>
+          </form>
+        </details>
+      <% } %>
+    </section>
+    <% if(selected?.capabilities.canCompleteCareTask){ %>
+      <section class="card care-plan-card care-reminder-panel" aria-labelledby="reminder-create-title">
+        <header class="care-plan-header"><span class="care-plan-icon is-mint" aria-hidden="true"><svg class="nav-icon"><use href="/icons.svg#activity"></use></svg></span><div class="care-plan-heading"><h3 id="reminder-create-title">Tạo nhắc chăm sóc</h3><p>Đo chỉ số, tập luyện, thay băng hoặc việc cần thực hiện.</p></div></header>
+        <form class="care-create-form care-reminder-form" method="post" action="/care/tasks">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="profileId" value="<%= profileId %>">
+          <label class="field"><span>Tên việc <span class="required-mark">*</span></span><input name="title" required maxlength="180" placeholder="VD: Đo huyết áp buổi tối"></label>
+          <label class="field"><span>Thời gian nhắc <span class="required-mark">*</span></span><input type="datetime-local" name="dueAt" required></label>
+          <label class="field"><span>Ghi chú</span><textarea name="description" maxlength="500" rows="2" placeholder="Thông tin cần nhớ (tùy chọn)"></textarea></label>
+          <div class="care-reminder-bottom"><p>Chỉ xác nhận hoàn thành khi đã đến giờ thực hiện.</p><button class="btn btn-primary care-submit" type="submit">Thêm nhắc chăm sóc</button></div>
+        </form>
+      </section>
+    <% } %>
+  </div>
+</section>
+<% } %>
+<dialog id="careCompletionDialog" class="ui-core-dialog ui-forms-completion-dialog" aria-labelledby="careCompletionTitle">
+  <form method="dialog" id="careCompletionForm" class="form-stack">
+    <h2 id="careCompletionTitle">Xác nhận hoàn thành</h2>
+    <p>Chỉ xác nhận công việc đã thực hiện. Bạn có thể bổ sung ghi chú thực tế.</p>
+    <label class="field"><span>Ghi chú thực tế (tùy chọn)</span><textarea id="careCompletionNote" maxlength="500" rows="3" placeholder="Ví dụ: Đã uống thuốc lúc 08:10, sức khỏe ổn định."></textarea></label>
+    <div class="ui-core-dialog-actions"><button type="button" class="btn btn-secondary" id="careCompletionCancel">Quay lại</button><button type="submit" class="btn btn-primary">Xác nhận</button></div>
+  </form>
+</dialog>
+<%- include('../partials/app-end') %>

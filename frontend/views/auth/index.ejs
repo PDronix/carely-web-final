@@ -1,0 +1,65 @@
+<%- include('../partials/head', { title }) %>
+<body>
+<main class="auth-page-v2">
+  <div class="auth-shell-v2">
+    <section class="auth-art">
+      <a class="brand" href="/"><span class="brand-mark">♥</span><span class="brand-name">Carely</span></a>
+      <div class="auth-art-copy">
+        <p class="eyebrow" style="color:#82d8b7">WELCOME TO CARELY</p>
+        <h1>Chủ động chăm sóc, y tế kịp thời.</h1>
+        <p>Một không gian riêng tư cho hồ sơ, lịch chăm sóc, chỉ số và hành trình khám của gia đình.</p>
+        <div class="auth-points"><span>✓ Phân quyền hồ sơ rõ ràng</span><span>✓ Chủ động kiểm soát dữ liệu</span><span>✓ Cơ sở y tế phải được xác minh</span></div>
+      </div>
+    </section>
+    <section class="auth-form-side">
+      <div class="auth-topline"><a href="/">← Trang chủ</a><span style="font-size:13px;color:var(--muted)">Không gian chăm sóc riêng của bạn</span></div>
+      <nav class="auth-tabs-v2"><a class="<%= mode === 'login' ? 'is-active' : '' %>" href="/auth?mode=login">Đăng nhập</a><a class="<%= mode === 'register' ? 'is-active' : '' %>" href="/auth?mode=register&type=<%= accountType %>">Đăng ký</a></nav>
+      <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+      <%- include('../partials/flash') %>
+
+      <% if (mode === 'login') { %>
+      <div class="auth-pane-v2">
+        <div class="page-head" style="margin-bottom:22px"><div><h1 style="font-size:30px">Chào mừng trở lại</h1><p class="sub">Đăng nhập để tiếp tục vào không gian Carely của bạn.</p></div></div>
+        <form class="form-stack" method="post" action="/auth/login" autocomplete="on">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label class="field"><span>Email</span><input type="email" name="email" value="<%= form.email || '' %>" required autocomplete="email"></label>
+          <label class="field"><span>Mật khẩu</span><input type="password" name="password" required autocomplete="current-password"></label>
+          <div class="auth-help"><label class="check-row"><input type="checkbox" name="rememberMe"><span>Ghi nhớ đăng nhập trong 7 ngày</span></label><a href="/auth/forgot-password">Quên mật khẩu?</a></div>
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:6px">Đăng nhập</button>
+        </form>
+      </div>
+      <% } else { %>
+      <div class="auth-pane-v2">
+        <div class="page-head" style="margin-bottom:18px"><div><h1 style="font-size:30px">Tạo tài khoản Carely</h1><p class="sub">Chọn loại tài khoản phù hợp với bạn.</p></div></div>
+        <div class="account-type-switch"><button type="button" data-auth-type="member" class="<%= accountType === 'member' ? 'is-active' : '' %>">Thành viên</button><button type="button" data-auth-type="facility" class="<%= accountType === 'facility' ? 'is-active' : '' %>">Cơ sở y tế</button></div>
+        <form class="form-stack" method="post" enctype="multipart/form-data" action="/auth/register">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="accountType" value="<%= accountType %>">
+          <div class="field-row"><label class="field"><span>Tên hiển thị</span><input name="displayName" value="<%= form.displayName || '' %>" required></label><label class="field"><span>Email</span><input type="email" name="email" value="<%= form.email || '' %>" required autocomplete="email"></label></div>
+          <div class="field-row"><label class="field"><span>Mật khẩu</span><input type="password" name="password" required autocomplete="new-password"></label><label class="field"><span>Xác nhận mật khẩu</span><input type="password" name="confirmPassword" required autocomplete="new-password"></label></div>
+          <label class="field"><span>Số điện thoại</span><input name="phone" value="<%= form.phone || '' %>" inputmode="tel"></label>
+
+          <div data-facility-field <%= accountType === 'facility' ? '' : 'hidden' %>>
+            <div class="field-row"><label class="field"><span>Tên cơ sở</span><input name="facilityName" value="<%= form.facilityName || '' %>"></label><label class="field"><span>Mã giấy phép / mã cơ sở</span><input name="licenseNumber" value="<%= form.licenseNumber || '' %>"></label></div>
+            <label class="field"><span>Địa chỉ</span><input name="address" value="<%= form.address || '' %>"></label>
+            <label class="field"><span>Chuyên khoa / lĩnh vực khám (tùy chọn)</span><input name="specialty" maxlength="180" value="<%= form.specialty || '' %>" placeholder="Nhi, Mắt, Đa khoa..."></label>
+            <label class="field"><span>Mô tả</span><textarea name="description"><%= form.description || '' %></textarea></label>
+            <label class="field"><span>Giấy phép hoạt động (PDF/JPG/PNG, tối đa 10 MB)</span><input type="file" name="licenseFile" accept="application/pdf,image/jpeg,image/png" <%= accountType === 'facility' ? 'required' : '' %>></label>
+          </div>
+
+          <div data-member-field <%= accountType === 'member' ? '' : 'hidden' %>>
+            <div class="field-row"><label class="field"><span>Ngày sinh</span><input type="date" name="dateOfBirth" value="<%= form.dateOfBirth || '' %>"></label><label class="field"><span>Giới tính</span><select name="gender"><option value="unspecified">Không chỉ định</option><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác</option></select></label></div>
+          </div>
+
+          <label class="check-row"><input type="checkbox" name="acceptTerms" required><span>Tôi đã đọc và đồng ý <a href="/terms" target="_blank">Điều khoản sử dụng</a>.</span></label>
+          <label class="check-row"><input type="checkbox" name="acceptPrivacy" required><span>Tôi đã đọc <a href="/privacy" target="_blank">Thông báo bảo vệ dữ liệu cá nhân</a> và đồng ý xử lý dữ liệu cần thiết để tạo, vận hành tài khoản Carely.</span></label>
+          <p class="legal-note">Khi bắt đầu sử dụng hồ sơ sức khỏe, Carely sẽ hỏi riêng sự đồng ý của bạn cho việc xử lý dữ liệu sức khỏe.</p>
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Tạo tài khoản</button>
+        </form>
+      </div>
+      <% } %>
+    </section>
+  </div>
+</main>
+<script src="/js/site.js" defer></script>
+</body></html>

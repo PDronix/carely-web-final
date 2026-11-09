@@ -1,0 +1,44 @@
+{
+  "name": "carely-web-final",
+  "version": "4.7.0",
+  "private": true,
+  "description": "Carely - Website quản lý thông tin sức khỏe, nhắc lịch chăm sóc sức khỏe và hỗ trợ kết nối với cơ sở y tế",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "nodemon backend/server.js",
+    "start": "node backend/server.js",
+    "seed": "node scripts/seed.js",
+    "seed:demo": "node scripts/seed-demo.js",
+    "verify:demo": "node scripts/verify-demo.js",
+    "test": "node --test",
+    "test:integration": "node scripts/run-test-db.js test",
+    "seed:test": "node scripts/run-test-db.js seed",
+    "demo:reset:plan": "node scripts/reset-demo.js --dry-run",
+    "demo:reset": "node scripts/reset-demo.js",
+    "check:source": "node scripts/check-source.js",
+    "test:preflight": "node scripts/check-test-db.js",
+    "demo:setup": "node scripts/setup-demo.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "express-mysql-session": "^3.0.3",
+    "express-rate-limit": "^8.1.0",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "method-override": "^3.0.0",
+    "multer": "^2.0.2",
+    "mysql2": "^3.15.3",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.10",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

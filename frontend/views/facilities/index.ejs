@@ -1,0 +1,29 @@
+<%- include('../partials/app-start', { title }) %>
+<div class="page-head ui-core-page-head"><div><p class="eyebrow">MẠNG LƯỚI CƠ SỞ Y TẾ</p><h1>Tìm cơ sở y tế</h1><p class="sub">Tra cứu cơ sở đã được xác minh và gửi yêu cầu khám theo hồ sơ bạn có quyền quản lý.</p></div><a class="btn btn-secondary" href="/appointments">Lịch hẹn của tôi</a></div>
+<div class="ui-core-info"><span aria-hidden="true">ⓘ</span> Chỉ sau khi lịch hẹn được xác nhận, cơ sở y tế mới có quyền xem hồ sơ trong phạm vi cho phép.</div>
+<form class="ui-core-directory-search card" method="get" action="/facilities" role="search"><label class="field"><span>Tìm theo tên, địa chỉ hoặc chuyên khoa</span><input type="search" name="q" value="<%= query %>" maxlength="100" placeholder="Ví dụ: Phòng khám, Hà Nội…"></label><button class="btn btn-primary">Tìm kiếm</button><% if(query){ %><a class="btn btn-ghost" href="/facilities">Xóa lọc</a><% } %></form>
+<div class="ui-core-section-head"><h2>Danh sách cơ sở</h2><p><%= count %> cơ sở phù hợp · Trang <%= page %>/<%= totalPages %></p></div>
+<% if (!profiles.length) { %><div class="alert-banner amber">Bạn cần có quyền quản lý hồ sơ mới có thể gửi yêu cầu đặt lịch.</div><% } %>
+<% if (!facilities.length) { %><section class="card card-pad empty-state">Không tìm thấy cơ sở nào phù hợp. Hãy thay đổi từ khóa tìm kiếm.</section><% } %>
+<div class="ui-core-directory-grid">
+<% facilities.forEach(f => { %>
+  <article class="ui-core-facility-card card">
+    <div class="ui-core-facility-head"><span class="ui-core-facility-symbol" aria-hidden="true">✚</span><span class="pill tone-mint">Đã xác minh</span></div>
+    <h3><%= f.facility_name %></h3>
+    <% if(f.specialty){ %><span class="pill tone-blue"><%= f.specialty %></span><% } %>
+    <p class="ui-core-facility-address"><span aria-hidden="true">⌖</span><%= f.address || 'Địa chỉ đang cập nhật' %></p>
+    <p class="ui-core-facility-desc"><%= f.description || 'Cơ sở y tế đã được Carely xác minh.' %></p>
+    <details class="ui-forms-facility-details"><summary>Xem thông tin cơ sở</summary><p><strong>Chuyên khoa:</strong> <%= f.specialty || 'Chưa cập nhật' %></p><p><strong>Điện thoại:</strong> <%= f.phone || 'Chưa cập nhật' %></p><p><strong>Địa chỉ:</strong> <%= f.address || 'Chưa cập nhật' %></p></details>
+    <div class="ui-core-facility-actions"><button type="button" class="btn btn-primary btn-sm js-open-booking" data-facility-id="<%= f.id %>" data-facility-name="<%= f.facility_name %>" <%= profiles.length ? '' : 'disabled' %>>Gửi yêu cầu đặt lịch</button></div>
+  </article>
+<% }) %>
+</div>
+<% if(totalPages > 1){ %><nav aria-label="Phân trang cơ sở y tế" class="ui-core-pagination">
+  <% if(page > 1){ %><a class="btn btn-secondary btn-sm" href="/facilities?q=<%= encodeURIComponent(query) %>&page=<%= page-1 %>">← Trước</a><% } %>
+  <span>Trang <strong><%= page %></strong> / <%= totalPages %></span>
+  <% if(page < totalPages){ %><a class="btn btn-secondary btn-sm" href="/facilities?q=<%= encodeURIComponent(query) %>&page=<%= page+1 %>">Tiếp →</a><% } %>
+</nav><% } %>
+<dialog id="bookingDialog" class="ui-core-dialog" aria-labelledby="bookingTitle"><div class="ui-core-dialog-top"><div><p class="eyebrow">YÊU CẦU KHÁM</p><h2 id="bookingTitle">Đặt lịch khám</h2><p id="bookingFacilityName"></p></div><button class="ui-core-close-dialog" type="button" data-close-dialog aria-label="Đóng">✕</button></div>
+<form id="v4BookingForm" method="post" class="form-stack"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="field"><span>Đặt lịch cho</span><select name="profileId" required><% profiles.forEach(x => { %><option value="<%= x.profile.id %>"><%= x.person.full_name %> · <%= x.isOwner ? 'Chủ hồ sơ' : 'Người quản lý' %></option><% }) %></select></label><label class="field"><span>Ngày và giờ mong muốn</span><input type="datetime-local" name="requestedFor" required></label><label class="field"><span>Lý do khám (tùy chọn)</span><textarea name="reason" rows="3" maxlength="500" placeholder="Mô tả ngắn về nhu cầu khám"></textarea></label><div class="ui-core-dialog-actions"><button class="btn btn-secondary" type="button" data-close-dialog>Đóng</button><button class="btn btn-primary" type="submit">Gửi yêu cầu</button></div></form>
+</dialog>
+<%- include('../partials/app-end') %>

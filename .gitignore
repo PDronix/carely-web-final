@@ -1,0 +1,19 @@
+node_modules/
+.env
+npm-debug.log*
+.DS_Store
+storage/private/facility-documents/*
+!storage/private/facility-documents/.gitkeep
+
+.env.test
+.env.*.local
+
+# Các PDF giả lập được tham chiếu trực tiếp trong db/data-demo.sql.
+# Chỉ đưa đúng các file demo đã xác định; các file upload runtime khác vẫn bị bỏ qua.
+!storage/private/facility-documents/seed-1-giay-phep-hoat-dong-demo.pdf
+!storage/private/facility-documents/seed-2-giay-phep-an-khang-demo.pdf
+!storage/private/facility-documents/carely-v4-demo-3.pdf
+!storage/private/facility-documents/carely-v4-demo-4.pdf
+!storage/private/facility-documents/carely-v4-demo-5.pdf
+!storage/private/facility-documents/carely-v4-demo-6.pdf
+!storage/private/facility-documents/carely-v4-demo-7.pdf

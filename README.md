@@ -150,8 +150,6 @@ Bản mã nguồn trước khi đóng gói đã được nghiệm thu 15/15 inte
 ## 7. Lưu ý phạm vi đồ án và bảo mật
 
 - Đây là bản đồ án chạy localhost với dữ liệu giả lập, không phải sản phẩm y tế triển khai công khai.
-- Dữ liệu trong snapshot được xác định là demo theo xác nhận của nhóm phát triển; tài khoản có email/số điện thoại dạng cá nhân đã được ẩn danh trước khi đóng gói công khai.
 - `MAIL_MODE=console` hỗ trợ phát triển local; cần cấu hình SMTP nếu muốn gửi email thật.
-- Không đưa `.env`, `.env.test`, mật khẩu thật, dữ liệu sức khỏe thật hoặc thông tin cá nhân thật lên GitHub.
 - Không dùng tài khoản/mật khẩu demo trên môi trường thật hoặc mở ứng dụng ra Internet.
 - Dependency có thể phát sinh cảnh báo bảo mật theo thời gian; cần kiểm tra và cập nhật có kiểm soát trước khi triển khai production.
